@@ -3,6 +3,10 @@
 const db = require("../db");
 const { UnauthorizedError } = require("../expressError");
 
+const bcrypt = require("bcrypt");
+
+const { SECRET_KEY, BCRYPT_WORK_FACTOR } = require("../config");
+
 /** User of the site. */
 
 class User {
@@ -42,10 +46,10 @@ class User {
 
     if (user) {
       if (await bcrypt.compare(password, user.password) === true) {
-        return result.json({message: "Logged in!"});
+        return true;
       }
     }
-    throw new UnauthorizedError("Invalid user/password");
+    return false;
   }
 
   /** Update last_login_at for user */
@@ -112,29 +116,30 @@ class User {
   /** Return messages from this user.
    *
    * [{id, to_user, body, sent_at, read_at}]
-   * 
+   *
    *
    * where to_user is
    *   {username, first_name, last_name, phone}
    */
-
   static async messagesFrom(username) {
     const mResults = await db.query(
-      `SELECT id, to_username, body, sent_at, read_at
+      `SELECT id, to_username AS to_user, body, sent_at, read_at
       FROM messages
       WHERE from_username = $1`,
       [username]);
-    let message = mResults.rows[0];
-    
+    let message = mResults.rows;
+
     const toUserResults = await db.query(
       `SELECT username, first_name, last_name, phone
       FROM users
-          JOIN messages ON users.username = messages.from_username
+          JOIN messages ON users.username = messages.to_username
       WHERE messages.from_username = $1`,
-      [username]); 
-    let to_user = toUserResults.rows;
+      [username]);
+    let to_user = toUserResults.rows[0];
 
-    message.to_username = to_user;
+    message[0].to_user = to_user;
+
+    return message;
   }
 
   /** Return messages to this user.
@@ -144,24 +149,25 @@ class User {
    * where from_user is
    *   {id, first_name, last_name, phone}
    */
-
   static async messagesTo(username) {
     const mResults = await db.query(
-      `SELECT id, to_username, body, sent_at, read_at
+      `SELECT id, from_username AS from_user, body, sent_at, read_at
       FROM messages
       WHERE to_username = $1`,
       [username]);
-    let message = mResults.rows[0];
+    let message = mResults.rows;
 
     const fromUserResults = await db.query(
       `SELECT username, first_name, last_name, phone
       FROM users
-          JOIN messages ON users.username = messages.to_username
+          JOIN messages ON users.username = messages.from_username
       WHERE messages.to_username = $1`,
-      [username]); 
-    let from_user = fromUserResults.rows;
+      [username]);
+    let from_user = fromUserResults.rows[0];
 
-    message.from_username = from_user;
+    message[0].from_user = from_user;
+
+    return message;
   }
 }
 
