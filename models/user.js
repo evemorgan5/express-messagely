@@ -112,15 +112,29 @@ class User {
   /** Return messages from this user.
    *
    * [{id, to_user, body, sent_at, read_at}]
+   * 
    *
    * where to_user is
    *   {username, first_name, last_name, phone}
    */
 
   static async messagesFrom(username) {
-    const result = await db.query(
-      `SELECT `
-    )
+    const mResults = await db.query(
+      `SELECT id, to_username, body, sent_at, read_at
+      FROM messages
+      WHERE from_username = $1`,
+      [username]);
+    let message = mResults.rows[0];
+    
+    const toUserResults = await db.query(
+      `SELECT username, first_name, last_name, phone
+      FROM users
+          JOIN messages ON users.username = messages.from_username
+      WHERE messages.from_username = $1`,
+      [username]); 
+    let to_user = toUserResults.rows;
+
+    message.to_username = to_user;
   }
 
   /** Return messages to this user.
@@ -132,6 +146,22 @@ class User {
    */
 
   static async messagesTo(username) {
+    const mResults = await db.query(
+      `SELECT id, to_username, body, sent_at, read_at
+      FROM messages
+      WHERE to_username = $1`,
+      [username]);
+    let message = mResults.rows[0];
+
+    const fromUserResults = await db.query(
+      `SELECT username, first_name, last_name, phone
+      FROM users
+          JOIN messages ON users.username = messages.to_username
+      WHERE messages.to_username = $1`,
+      [username]); 
+    let from_user = fromUserResults.rows;
+
+    message.from_username = from_user;
   }
 }
 
