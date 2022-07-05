@@ -14,13 +14,13 @@ const router = new Router();
 router.post("/login", async function(req, res, next) {
   const {username, password} = req.body;
   const result = await User.authenticate(username, password);
+  console.log(result);
   if (result === true) {
     // generate token
     const token = jwt.sign({username}, SECRET_KEY);
     return res.json({token});
-  } else {
-    throw new UnauthorizedError("Invalid user/password");
   }
+  throw new UnauthorizedError("Invalid user/password");
 });
 
 /** POST /register: registers, logs in, and returns token.
@@ -31,15 +31,14 @@ router.post("/login", async function(req, res, next) {
 router.post("/register", async function(req, res, next) {
   const {username, password, first_name, last_name, phone} = req.body;
   // register user and save data to db
-  const regResult = await User.register(username, password, first_name, last_name, phone);
+  const regResult = await User.register(req.body);
   const logResult = await User.authenticate(username, password);
   if (logResult === true) {
     // generate token
     const token = jwt.sign({username}, SECRET_KEY);
     return res.json({token});
-  } else {
-    throw new UnauthorizedError("Invalid user/password");
   }
+  throw new UnauthorizedError("Invalid user/password");
 });
 
 
