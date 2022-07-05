@@ -117,7 +117,7 @@ describe("Test messages part of User class", function () {
   });
 
   test("can get messages from user", async function () {
-    let m = await User.messagesFrom("test2");
+    let m = await User.messagesFrom("test1");
     expect(m).toEqual([{
       id: expect.any(Number),
       body: "u1-to-u2",
