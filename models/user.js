@@ -141,9 +141,10 @@ class User {
 
 
     // let {id, messages.to_username = {username, first_name, last_name, phone}, body, send_at, read_at} = messagesResults
-    let { id, body, sent_at, read_at, ...to_user } = messagesResults;
-    console.log("messagesResults=", messagesResults);
-    return messagesResults;
+    let { id, body, sent_at, read_at, ...to_user } = messages;
+    console.log("messagesResults=", messages);
+    console.log("to_user",to_user);
+    return messages;
 
   }
 
