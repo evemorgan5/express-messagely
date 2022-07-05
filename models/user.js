@@ -1,7 +1,7 @@
 "use strict";
 
 const db = require("../db");
-const { UnauthorizedError } = require("../expressError");
+const { NotFoundError } = require("../expressError");
 
 const bcrypt = require("bcrypt");
 
@@ -59,9 +59,8 @@ class User {
         `UPDATE users
         SET last_login_at = current_timestamp
           WHERE username = $1
-          RETURNING username, last_login_at`,
+          RETURNING username`,
       [username]);
-      //TODO: do we need to return username?
     const user = result.rows[0];
 
     if (!user) throw new NotFoundError(`No such user: ${username}`);
@@ -79,8 +78,6 @@ class User {
 
     let users = result.rows;
     return users;
-
-    //TODO: error if nothing exists in users table
   }
 
   /** Get: get user by username
@@ -122,24 +119,30 @@ class User {
    *   {username, first_name, last_name, phone}
    */
   static async messagesFrom(username) {
-    const mResults = await db.query(
-      `SELECT id, to_username AS to_user, body, sent_at, read_at
-      FROM messages
-      WHERE from_username = $1`,
+    const result = await db.query(
+      `SELECT
+        m.id,
+        m.to_username,
+        m.body,
+        m.sent_at,
+        m.read_at,
+        u.first_name,
+        u.last_name,
+        u.phone
+      FROM
+        messages AS m
+      JOIN users AS u
+      ON m.to_username = u.username
+      WHERE m.from_username = $1`,
       [username]);
-    let message = mResults.rows;
 
-    const toUserResults = await db.query(
-      `SELECT username, first_name, last_name, phone
-      FROM users
-          JOIN messages ON users.username = messages.to_username
-      WHERE messages.from_username = $1`,
-      [username]);
-    let to_user = toUserResults.rows[0];
+    let messages = result.rows;
+    console.log(messages.to_username);
 
-    message[0].to_user = to_user;
 
-    return message;
+    let {id, messages.to_username = {username, first_name, last_name, phone}, body, send_at, read_at} = messagesResults
+    return messagesResults;
+
   }
 
   /** Return messages to this user.

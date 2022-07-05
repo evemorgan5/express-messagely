@@ -92,6 +92,13 @@ describe("Test messages part of User class", function () {
       last_name: "Testy2",
       phone: "+14155552222",
     });
+    let u3 = await User.register({
+      username: "test3",
+      password: "password",
+      first_name: "Test3",
+      last_name: "Testy3",
+      phone: "+14155552233",
+    });
     let m1 = await Message.create({
       from_username: "test1",
       to_username: "test2",
@@ -102,10 +109,15 @@ describe("Test messages part of User class", function () {
       to_username: "test1",
       body: "u2-to-u1",
     });
+    let m3 = await Message.create({
+      from_username: "test2",
+      to_username: "test3",
+      body: "u2-to-u3",
+    });
   });
 
   test("can get messages from user", async function () {
-    let m = await User.messagesFrom("test1");
+    let m = await User.messagesFrom("test2");
     expect(m).toEqual([{
       id: expect.any(Number),
       body: "u1-to-u2",
