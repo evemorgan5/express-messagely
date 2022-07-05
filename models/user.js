@@ -137,16 +137,17 @@ class User {
       [username]);
 
     let messages = result.rows;
-    console.log(messages.to_username);
 
-
-    // let {id, messages.to_username = {username, first_name, last_name, phone}, body, send_at, read_at} = messagesResults
-    // let { id, body, sent_at, read_at, ...to_user } = messagesResults;
-    // let messagesMap = messages.map(m => { m.id, m.body, m.send_at, m.read_at });
-    // console.log(messagesMap);
-    // return messages;
-    // console.log("messagesResults=", messagesResults);
-    // return messagesResults;
+    return messages.map(m => ({
+      id: m.id,
+      to_user: {
+        username: m.to_username, 
+        first_name: m.first_name,
+        last_name: m.last_name,
+        phone: m.phone},
+      body: m.body,
+      sent_at: m.sent_at,
+      read_at: m.read_at }));
   }
 
   /** Return messages to this user.
@@ -157,24 +158,35 @@ class User {
    *   {id, first_name, last_name, phone}
    */
   static async messagesTo(username) {
-    const mResults = await db.query(
-      `SELECT id, from_username AS from_user, body, sent_at, read_at
-      FROM messages
-      WHERE to_username = $1`,
+    const result = await db.query(
+      `SELECT
+        m.id,
+        m.from_username,
+        m.body,
+        m.sent_at,
+        m.read_at,
+        u.first_name,
+        u.last_name,
+        u.phone
+      FROM
+        messages AS m
+      JOIN users AS u
+      ON m.from_username = u.username
+      WHERE m.to_username = $1`,
       [username]);
-    let message = mResults.rows;
 
-    const fromUserResults = await db.query(
-      `SELECT username, first_name, last_name, phone
-      FROM users
-          JOIN messages ON users.username = messages.from_username
-      WHERE messages.to_username = $1`,
-      [username]);
-    let from_user = fromUserResults.rows[0];
+    let messages = result.rows;
 
-    message[0].from_user = from_user;
-
-    return message;
+    return messages.map(m => ({
+      id: m.id,
+      from_user: {
+        username: m.from_username, 
+        first_name: m.first_name,
+        last_name: m.last_name,
+        phone: m.phone},
+      body: m.body,
+      sent_at: m.sent_at,
+      read_at: m.read_at }));
   }
 }
 
